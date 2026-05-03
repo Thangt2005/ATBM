@@ -36,7 +36,7 @@ public class HillCipher extends AbsCipher {
 	@Override
 	public void loadKey(String key) {
 	    try {
-	        // Tách chuỗi dựa trên khoảng trắng hoặc dấu phẩy (cho linh hoạt)
+	        // Tách chuỗi 
 	        String[] parts = key.trim().split("[\\s,]+");
 	        
 	        if (parts.length == 4) {
@@ -45,13 +45,13 @@ public class HillCipher extends AbsCipher {
 	            int c = Integer.parseInt(parts[2]);
 	            int d = Integer.parseInt(parts[3]);
 	            
-	            // QUAN TRỌNG: Gán giá trị vào mảng Key của class
+	            //Gán giá trị vào mảng Key của class
 	            this.Key[0][0] = a;
 	            this.Key[0][1] = b;
 	            this.Key[1][0] = c;
 	            this.Key[1][1] = d;
 	        } else {
-	            throw new IllegalArgumentException("Key Hill phải có đúng 4 số!");
+	            throw new IllegalArgumentException("Key Hill phải có đúng 4 số!");//ma trận chọn làm key 2*2
 	        }
 	    } catch (NumberFormatException e) {
 	        throw new NumberFormatException("Định dạng số trong Key không hợp lệ!");
@@ -61,18 +61,12 @@ public class HillCipher extends AbsCipher {
 	@Override
 	public byte[] encrypt(String text) throws Exception {
 
-	    // Bước 1: chuẩn hóa chuỗi
-	    text = text.toUpperCase();
-	    text = text.replaceAll("[^A-Z]", "");
-
-	    // Bước 2: nếu lẻ thì thêm X
 	    if (text.length() % 2 != 0) {
 	        text = text + "X";
 	    }
 
 	    StringBuilder result = new StringBuilder();
 
-	    // Bước 3: duyệt từng cặp 2 ký tự
 	    for (int i = 0; i < text.length(); i = i + 2) {
 
 	        char char1 = text.charAt(i);
@@ -103,7 +97,7 @@ public class HillCipher extends AbsCipher {
 
 	    String text = new String(cipherText);
 
-	    // Bước 1: tính định thức
+	    //tính định thức
 	    int a = Key[0][0];
 	    int b = Key[0][1];
 	    int c = Key[1][0];
@@ -112,10 +106,10 @@ public class HillCipher extends AbsCipher {
 	    int det = a * d - b * c;
 	    det = mod(det, 26);
 
-	    // Bước 2: tìm nghịch đảo của det
+	    //tìm nghịch đảo của det
 	    int detInverse = modInverse(det, 26);
 
-	    // Bước 3: tính ma trận nghịch đảo
+	    //tính ma trận nghịch đảo
 	    int[][] inverseMatrix = new int[2][2];
 
 	    inverseMatrix[0][0] = mod(d * detInverse, 26);
@@ -125,7 +119,7 @@ public class HillCipher extends AbsCipher {
 
 	    StringBuilder result = new StringBuilder();
 
-	    // Bước 4: giải mã từng cặp
+	    //giải mã từng cặp
 	    for (int i = 0; i < text.length(); i = i + 2) {
 
 	        char char1 = text.charAt(i);
@@ -149,6 +143,7 @@ public class HillCipher extends AbsCipher {
 
 	    return result.toString();
 	}
+	//ucln phụ kiểm tra tính hợp lệ của key
 	private int gcd(int a, int b) {
 	    if (b == 0) {
 	        return Math.abs(a);

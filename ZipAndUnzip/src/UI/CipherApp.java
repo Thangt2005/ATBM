@@ -30,6 +30,7 @@ public class CipherApp {
 	RSA rsa = new RSA();
 	boolean rsaReady = false;
 	boolean keySave = false;
+	
 //vùng panel chọn các giải thuật mã hóa
 	JPanel pnlMenu = new JPanel(new BorderLayout());
 
@@ -115,7 +116,6 @@ public class CipherApp {
 
 		
 		btnEncrypt.addActionListener(e -> {
-
 		    if (!keySave) {
 		        jtextOutput.setText("Vui lòng Save Key trước khi Encrypt!");
 		        return;
@@ -126,57 +126,47 @@ public class CipherApp {
 		    String result = "";
 
 		    try {
-
-		        // ===== Chọn thuật toán =====
+		        // --- 1. Khởi tạo đối tượng thuật toán tương ứng ---
 		        if (algo.equals("Dịch chuyển")) {
-
 		            ab = new ShiftCipher();
-
 		        } else if (algo.equals("Hill")) {
-
 		            String keyText = txtKey.getText().trim();
 		            String[] parts = keyText.split(" ");
-
-		            // kiểm tra đủ 4 số
 		            if (parts.length != 4) {
 		                jtextOutput.setText("Key Hill phải gồm 4 số! Ví dụ: 3 3 2 5");
 		                return;
 		            }
-
+		            // Kiểm tra tính hợp lệ của ma trận Hill
 		            int a = Integer.parseInt(parts[0]);
 		            int b = Integer.parseInt(parts[1]);
 		            int c = Integer.parseInt(parts[2]);
 		            int d = Integer.parseInt(parts[3]);
-
-		            int det = a * d - b * c;
-		            det = ((det % 26) + 26) % 26;
-
+		            int det = (( (a * d - b * c) % 26) + 26) % 26;
 		            if (gcd(det, 26) != 1) {
-		                jtextOutput.setText("Key Hill không hợp lệ!");
+		                jtextOutput.setText("Key Hill không hợp lệ (không có nghịch đảo)!");
 		                return;
 		            }
-
 		            ab = new HillCipher();
-
+		        } else if (algo.equals("Hoán vị")) {
+		            ab = new PermutationCipher();
+		            if (txtKey.getText().trim().isEmpty()) {
+		                jtextOutput.setText("Vui lòng nhập key hoán vị (Ví dụ: 312)!");
+		                return;
+		            }
 		        } else if (algo.equals("RSA")) {
-
 		            if (!rsaReady) {
 		                rsa.genKey();
 		                rsaReady = true;
 		            }
-
-		            result = rsa.encryptBase64(input);
-		            jtextOutput.setText(result);
-		            return;
-
+		            jtextOutput.setText(rsa.encryptBase64(input));
+		            return; // RSA xử lý riêng nên return luôn
 		        } else {
-
 		            jtextOutput.setText("Chưa hỗ trợ thuật toán này!");
 		            return;
 		        }
 
-		        // ===== Load key + encrypt =====
-		        ab.loadKey(txtKey.getText());
+		        // --- 2. Nạp Key và thực hiện Encrypt cho các thuật toán AbsCipher ---
+		        ab.loadKey(txtKey.getText().trim());
 		        result = new String(ab.encrypt(input));
 
 		    } catch (Exception ex) {
@@ -187,62 +177,35 @@ public class CipherApp {
 		    jtextOutput.setText(result);
 		});
 		btnDecrypt.addActionListener(e -> {
-
 		    if (!keySave) {
 		        jtextOutput.setText("Vui lòng Save Key trước khi Decrypt!");
 		        return;
 		    }
 
-		    String input = jtextOutput.getText(); // lấy từ output
+		    // Lấy input từ ô văn bản (Thường là giải mã cái mình vừa dán vào)
+		    String input = jtextInput.getText(); 
 		    String algo = (String) cbAlgorithm.getSelectedItem();
 		    String result = "";
 
 		    try {
-
-		        // ===== Chọn thuật toán =====
+		        // --- 1. Khởi tạo đối tượng thuật toán tương ứng ---
 		        if (algo.equals("Dịch chuyển")) {
-
 		            ab = new ShiftCipher();
-
 		        } else if (algo.equals("Hill")) {
-
-		            String keyText = txtKey.getText().trim();
-		            String[] parts = keyText.split(" ");
-
-		            if (parts.length != 4) {
-		                jtextOutput.setText("Key Hill phải gồm 4 số!");
-		                return;
-		            }
-
-		            int a = Integer.parseInt(parts[0]);
-		            int b = Integer.parseInt(parts[1]);
-		            int c = Integer.parseInt(parts[2]);
-		            int d = Integer.parseInt(parts[3]);
-
-		            int det = a * d - b * c;
-		            det = ((det % 26) + 26) % 26;
-
-		            if (gcd(det, 26) != 1) {
-		                jtextOutput.setText("Key Hill không hợp lệ!");
-		                return;
-		            }
-
 		            ab = new HillCipher();
-
+		        } else if (algo.equals("Hoán vị")) {
+		            ab = new PermutationCipher();
 		        } else if (algo.equals("RSA")) {
-
 		            result = rsa.decrypt(input);
 		            jtextOutput.setText(result);
-		            return;
-
+		            return; // RSA return luôn
 		        } else {
-
 		            jtextOutput.setText("Chưa hỗ trợ thuật toán này!");
 		            return;
 		        }
 
-		        // ===== Load key + decrypt =====
-		        ab.loadKey(txtKey.getText());
+		        // --- 2. Nạp Key và thực hiện Decrypt ---
+		        ab.loadKey(txtKey.getText().trim());
 		        result = ab.decrypt(input.getBytes());
 
 		    } catch (Exception ex) {
@@ -270,22 +233,20 @@ public class CipherApp {
 		    Random random = new Random();
 
 		    if (algo.equals("Hill")) {
-
-		        // tạo key 2x2 hợp lệ
-		        int a = 3;
-		        int b = 3;
-		        int c = 2;
-		        int d = 5;
-
-		        txtKey.setText(a + " " + b + " " + c + " " + d);
-
+		        // Tạo một key Hill mẫu dễ tính toán
+		        txtKey.setText("3 3 2 5");
+		    } else if (algo.equals("Hoán vị")) {
+		        // Tạo key hoán vị mẫu cho sinh viên
+		        txtKey.setText("312");
+		    } else if (algo.equals("RSA")) {
+		        txtKey.setText("RSA tự tạo khóa khi Encrypt");
 		    } else {
-
+		        // Key dịch chuyển/thay thế ngẫu nhiên
 		        int randomKey = random.nextInt(25) + 1;
 		        txtKey.setText(String.valueOf(randomKey));
 		    }
 
-		    keySave = false;
+		    keySave = false; // Reset trạng thái để nhắc người dùng bấm Save Key mới
 		});
 
 		// Nút ImportKey từ file
@@ -363,10 +324,10 @@ public class CipherApp {
 	}
 
 	private int gcd(int a, int b) {
-	    if (b == 0) {
-	        return Math.abs(a);
-	    }
-	    return gcd(b, a % b);
+		if (b == 0) {
+			return Math.abs(a);
+		}
+		return gcd(b, a % b);
 	}
 
 	private String decrypt(String input, int key) {

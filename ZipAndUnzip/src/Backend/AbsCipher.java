@@ -7,10 +7,14 @@ import javax.crypto.SecretKey;
 public abstract class AbsCipher {
     protected SecretKey key;
 
-    public SecretKey getKey() { return key; }
+    public SecretKey getKey() {
+    	return key;
+    	}
     
     // Nạp khóa trực tiếp
-    public void loadKey(SecretKey key) { this.key = key; }
+    public void loadKey(SecretKey key) {
+    	this.key = key; 
+    	}
 
     public abstract SecretKey genKey() throws Exception;
     public abstract void loadKey(String key) throws Exception;
