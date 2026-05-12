@@ -1,63 +1,117 @@
 package Backend;
 
-import java.util.*;
+import java.util.Random;
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 public class SubCipher extends AbsCipher {
-    private final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    private String bangChu = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     @Override
     public SecretKey genKey() throws Exception {
-        // Tạo danh sách ký tự và xáo trộn
-        List<String> letters = Arrays.asList(ALPHABET.split(""));
-        Collections.shuffle(letters);
-        String shuffled = String.join("", letters);
-        return new SecretKeySpec(shuffled.getBytes(), "Substitution");
+
+        char[] arr = bangChu.toCharArray();
+
+        Random rd = new Random();
+
+        // đảo vị trí ký tự
+        for(int i = 0; i < arr.length; i++) {
+
+            int j = rd.nextInt(arr.length);
+
+            char temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+
+        String khoa = "";
+
+        for(int i = 0; i < arr.length; i++) {
+            khoa += arr[i];
+        }
+
+        key = new SecretKeySpec(khoa.getBytes(), "Substitution");
+
+        return key;
     }
 
     @Override
     public void loadKey(String keyStr) throws Exception {
-        this.key = new SecretKeySpec(keyStr.toUpperCase().getBytes(), "Substitution");
+
+        if(keyStr == null || keyStr.length() != 26) {
+            throw new Exception("Key khong hop le");
+        }
+
+        key = new SecretKeySpec(keyStr.toUpperCase().getBytes(), "Substitution");
     }
 
     @Override
     public byte[] encrypt(String text) throws Exception {
-        String keyStr = new String(key.getEncoded());
-        StringBuilder result = new StringBuilder();
 
-        for (char c : text.toCharArray()) {
-            char upperC = Character.toUpperCase(c);
-            int index = ALPHABET.indexOf(upperC);
-            
-            if (index != -1) {
-                char mappedChar = keyStr.charAt(index);
-                // Giữ nguyên kiểu chữ hoa/thường
-                result.append(Character.isLowerCase(c) ? Character.toLowerCase(mappedChar) : mappedChar);
-            } else {
-                result.append(c); // Ký tự đặc biệt giữ nguyên
+        String khoa = new String(key.getEncoded());
+
+        String result = "";
+
+        for(int i = 0; i < text.length(); i++) {
+
+            char c = text.charAt(i);
+
+            char upper = Character.toUpperCase(c);
+
+            int vt = bangChu.indexOf(upper);
+
+            if(vt != -1) {
+
+                char maHoa = khoa.charAt(vt);
+
+                if(Character.isLowerCase(c)) {
+                    maHoa = Character.toLowerCase(maHoa);
+                }
+
+                result += maHoa;
+            }
+            else {
+                result += c;
             }
         }
-        return result.toString().getBytes();
+
+        return result.getBytes();
     }
 
     @Override
     public String decrypt(byte[] cipherText) throws Exception {
-        String keyStr = new String(key.getEncoded());
-        String text = new String(cipherText);
-        StringBuilder result = new StringBuilder();
 
-        for (char c : text.toCharArray()) {
-            char upperC = Character.toUpperCase(c);
-            int index = keyStr.indexOf(upperC); // Tìm trong bảng khóa
-            
-            if (index != -1) {
-                char originalChar = ALPHABET.charAt(index); // Lấy từ bảng chuẩn
-                result.append(Character.isLowerCase(c) ? Character.toLowerCase(originalChar) : originalChar);
-            } else {
-                result.append(c);
+        String text = new String(cipherText);
+
+        String khoa = new String(key.getEncoded());
+
+        String result = "";
+
+        for(int i = 0; i < text.length(); i++) {
+
+            char c = text.charAt(i);
+
+            char upper = Character.toUpperCase(c);
+
+            int vt = khoa.indexOf(upper);
+
+            if(vt != -1) {
+
+                char goc = bangChu.charAt(vt);
+
+                if(Character.isLowerCase(c)) {
+                    goc = Character.toLowerCase(goc);
+                }
+
+                result += goc;
+            }
+            else {
+                result += c;
             }
         }
-        return result.toString();
+
+        return result;
     }
 }
