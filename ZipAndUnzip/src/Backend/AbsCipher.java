@@ -20,7 +20,9 @@ public abstract class AbsCipher {
     public abstract void loadKey(String key) throws Exception;
     public abstract byte[] encrypt(String text) throws Exception;
     public abstract String decrypt(byte[] cipherText) throws Exception;
-
+    public abstract byte[] encrypt(byte[] data) throws Exception;
+    public abstract byte[] decryptByte(byte[] data) throws Exception;
+    
     public String encryptBase64(String text) throws Exception {
         return Base64.getEncoder().encodeToString(encrypt(text));
     }

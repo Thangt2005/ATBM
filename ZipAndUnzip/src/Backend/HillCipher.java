@@ -173,4 +173,77 @@ public class HillCipher extends AbsCipher {
 
 	    throw new RuntimeException("Không có nghịch đảo");
 	}
+	@Override
+	public byte[] encrypt(byte[] data) throws Exception {
+
+		if (data.length % 2 != 0) {
+
+			byte[] temp = new byte[data.length + 1];
+
+			System.arraycopy(data, 0, temp, 0, data.length);
+
+			temp[data.length] = 0;
+
+			data = temp;
+		}
+
+		byte[] result = new byte[data.length];
+
+		for (int i = 0; i < data.length; i += 2) {
+
+			int x = data[i] & 0xFF;
+			int y = data[i + 1] & 0xFF;
+
+			int value1 = Key[0][0] * x + Key[0][1] * y;
+			int value2 = Key[1][0] * x + Key[1][1] * y;
+
+			result[i] = (byte) (value1 % 256);
+			result[i + 1] = (byte) (value2 % 256);
+		}
+
+		return result;
+	}
+
+	@Override
+	public byte[] decryptByte(byte[] data) throws Exception {
+
+		int a = Key[0][0];
+		int b = Key[0][1];
+		int c = Key[1][0];
+		int d = Key[1][1];
+
+		int det = a * d - b * c;
+
+		det = mod(det, 256);
+
+		int detInverse = modInverse(det, 256);
+
+		int[][] inverseMatrix = new int[2][2];
+
+		inverseMatrix[0][0] = mod(d * detInverse, 256);
+		inverseMatrix[0][1] = mod(-b * detInverse, 256);
+		inverseMatrix[1][0] = mod(-c * detInverse, 256);
+		inverseMatrix[1][1] = mod(a * detInverse, 256);
+
+		byte[] result = new byte[data.length];
+
+		for (int i = 0; i < data.length; i += 2) {
+
+			int x = data[i] & 0xFF;
+			int y = data[i + 1] & 0xFF;
+
+			int value1 =
+				inverseMatrix[0][0] * x +
+				inverseMatrix[0][1] * y;
+
+			int value2 =
+				inverseMatrix[1][0] * x +
+				inverseMatrix[1][1] * y;
+
+			result[i] = (byte) mod(value1, 256);
+			result[i + 1] = (byte) mod(value2, 256);
+		}
+
+		return result;
+	}
 }

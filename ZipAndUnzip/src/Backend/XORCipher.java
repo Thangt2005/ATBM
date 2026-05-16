@@ -57,4 +57,34 @@ public class XORCipher extends AbsCipher {
 
         return new String(output);
     }
-}
+    @Override
+    public byte[] encrypt(byte[] data) throws Exception {
+
+    	byte[] keyBytes = keyText.getBytes();
+
+    	byte[] output = new byte[data.length];
+
+    	for (int i = 0; i < data.length; i++) {
+
+    		output[i] =
+    			(byte) (data[i] ^ keyBytes[i % keyBytes.length]);
+    	}
+
+    	return output;
+    }
+
+    @Override
+    public byte[] decryptByte(byte[] data) throws Exception {
+
+    	byte[] keyBytes = keyText.getBytes();
+
+    	byte[] output = new byte[data.length];
+
+    	for (int i = 0; i < data.length; i++) {
+
+    		output[i] =
+    			(byte) (data[i] ^ keyBytes[i % keyBytes.length]);
+    	}
+
+    	return output;
+    }}

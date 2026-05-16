@@ -114,4 +114,72 @@ public class SubCipher extends AbsCipher {
 
         return result;
     }
+    @Override
+    public byte[] encrypt(byte[] data) throws Exception {
+
+    	String khoa = new String(key.getEncoded());
+
+    	byte[] subTable = new byte[256];
+
+    	for (int i = 0; i < 256; i++) {
+    		subTable[i] = (byte) i;
+    	}
+
+    	for (int i = 0; i < 26; i++) {
+
+    		char plain = bangChu.charAt(i);
+
+    		char sub = khoa.charAt(i);
+
+    		subTable[(byte) plain & 0xFF] = (byte) sub;
+    		subTable[(byte) Character.toLowerCase(plain) & 0xFF]
+    				= (byte) Character.toLowerCase(sub);
+    	}
+
+    	byte[] result = new byte[data.length];
+
+    	for (int i = 0; i < data.length; i++) {
+
+    		int value = data[i] & 0xFF;
+
+    		result[i] = subTable[value];
+    	}
+
+    	return result;
+    }
+
+    @Override
+    public byte[] decryptByte(byte[] data) throws Exception {
+
+    	String khoa = new String(key.getEncoded());
+
+    	byte[] reverseTable = new byte[256];
+
+    	for (int i = 0; i < 256; i++) {
+    		reverseTable[i] = (byte) i;
+    	}
+
+    	for (int i = 0; i < 26; i++) {
+
+    		char plain = bangChu.charAt(i);
+
+    		char sub = khoa.charAt(i);
+
+    		reverseTable[(byte) sub & 0xFF] = (byte) plain;
+
+    		reverseTable[(byte) Character.toLowerCase(sub) & 0xFF]
+    				= (byte) Character.toLowerCase(plain);
+    	}
+
+    	byte[] result = new byte[data.length];
+
+    	for (int i = 0; i < data.length; i++) {
+
+    		int value = data[i] & 0xFF;
+
+    		result[i] = reverseTable[value];
+    	}
+
+    	return result;
+    }
 }

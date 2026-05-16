@@ -85,4 +85,41 @@ public class ShiftCipher extends AbsCipher {
 
 		return result;
 	}
+	@Override
+	public byte[] encrypt(byte[] data) throws Exception {
+
+		int k = Integer.parseInt(new String(key.getEncoded()));
+
+		byte[] result = new byte[data.length];
+
+		for (int i = 0; i < data.length; i++) {
+
+			int x = data[i] & 0xFF;
+
+			x = (x + k) % 256;
+
+			result[i] = (byte) x;
+		}
+
+		return result;
+	}
+
+	@Override
+	public byte[] decryptByte(byte[] data) throws Exception {
+
+		int k = Integer.parseInt(new String(key.getEncoded()));
+
+		byte[] result = new byte[data.length];
+
+		for (int i = 0; i < data.length; i++) {
+
+			int y = data[i] & 0xFF;
+
+			y = (y - k + 256) % 256;
+
+			result[i] = (byte) y;
+		}
+
+		return result;
+	}
 }

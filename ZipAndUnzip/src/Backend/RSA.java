@@ -27,6 +27,25 @@ public byte[] encrypt(String data) throws Exception{
 	return out;
 	
 }
+public byte[] encrypt(byte[] data) throws Exception {
+
+	Cipher cipher =
+		Cipher.getInstance("RSA/ECB/PKCS1Padding");
+
+	cipher.init(Cipher.ENCRYPT_MODE, publickey);
+
+	return cipher.doFinal(data);
+}
+
+public byte[] decrypt(byte[] data) throws Exception {
+
+	Cipher cipher =
+		Cipher.getInstance("RSA/ECB/PKCS1Padding");
+
+	cipher.init(Cipher.DECRYPT_MODE, privatekey);
+
+	return cipher.doFinal(data);
+}
 public String decrypt(String base64) throws Exception {
 	Cipher cipher= Cipher.getInstance("RSA/ECB/PKCS1Padding");
 	byte in[] = Base64.getDecoder().decode(base64);

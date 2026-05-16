@@ -78,4 +78,84 @@ private int doDaiKhoa;
         }
         return ketQua.trim(); // Xóa khoảng trắng thừa
     }
+	@Override
+	public byte[] encrypt(byte[] data) throws Exception {
+
+		int soCot = doDaiKhoa;
+
+		int soHang = (data.length + soCot - 1) / soCot;
+
+		byte[][] matrix = new byte[soHang][soCot];
+
+		int pointer = 0;
+
+		for (int i = 0; i < soHang; i++) {
+
+			for (int j = 0; j < soCot; j++) {
+
+				if (pointer < data.length) {
+
+					matrix[i][j] = data[pointer++];
+
+				} else {
+
+					matrix[i][j] = 0;
+				}
+			}
+		}
+
+		byte[] result = new byte[soHang * soCot];
+
+		pointer = 0;
+
+		for (int i = 0; i < doDaiKhoa; i++) {
+
+			int chiSoCot =
+				Character.getNumericValue(keyStr.charAt(i)) - 1;
+
+			for (int r = 0; r < soHang; r++) {
+
+				result[pointer++] = matrix[r][chiSoCot];
+			}
+		}
+
+		return result;
+	}
+
+	@Override
+	public byte[] decryptByte(byte[] data) throws Exception {
+
+		int soCot = doDaiKhoa;
+
+		int soHang = data.length / soCot;
+
+		byte[][] matrix = new byte[soHang][soCot];
+
+		int pointer = 0;
+
+		for (int i = 0; i < doDaiKhoa; i++) {
+
+			int chiSoCot =
+				Character.getNumericValue(keyStr.charAt(i)) - 1;
+
+			for (int r = 0; r < soHang; r++) {
+
+				matrix[r][chiSoCot] = data[pointer++];
+			}
+		}
+
+		byte[] result = new byte[soHang * soCot];
+
+		pointer = 0;
+
+		for (int i = 0; i < soHang; i++) {
+
+			for (int j = 0; j < soCot; j++) {
+
+				result[pointer++] = matrix[i][j];
+			}
+		}
+
+		return result;
+	}
 }

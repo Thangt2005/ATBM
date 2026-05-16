@@ -46,7 +46,7 @@ public class AffineCipher extends AbsCipher {
         int keyA = Integer.parseInt(arr[0].trim());
         int keyB = Integer.parseInt(arr[1].trim());
 
-        if (gcd(keyA, 26) != 1) {
+        if (gcd(keyA, 256) != 1) {
             throw new Exception("a phải là số lẻ");
         }
 
@@ -105,17 +105,17 @@ public class AffineCipher extends AbsCipher {
     }
 
     // tìm nghịch đảo modulo
-    private int modInverse(int a) {
+	private int modInverse(int a) {
 
-        for (int i = 1; i < 256; i++) {
+		for (int i = 1; i < 256; i++) {
 
-            if ((a * i) % 26 == 1) {
-                return i;
-            }
-        }
+			if ((a * i) % 256 == 1) {
+				return i;
+			}
+		}
 
-        return -1;
-    }
+		return -1;
+	}
 
     @Override
     public String decrypt(byte[] cipherText) throws Exception {
@@ -151,5 +151,45 @@ public class AffineCipher extends AbsCipher {
         }
 
         return result;
+    }
+
+    @Override
+    public byte[] encrypt(byte[] data) throws Exception {
+
+    	byte[] result = new byte[data.length];
+
+    	for (int i = 0; i < data.length; i++) {
+
+    		int x = data[i] & 0xFF;
+
+    		int y = (a * x + b) % 256;
+
+    		result[i] = (byte) y;
+    	}
+
+    	return result;
+    }
+
+    @Override
+    public byte[] decryptByte(byte[] data) throws Exception {
+
+    	int aInv = modInverse(a);
+
+    	if (aInv == -1) {
+    		throw new Exception("Không tìm thấy nghịch đảo modulo");
+    	}
+
+    	byte[] result = new byte[data.length];
+
+    	for (int i = 0; i < data.length; i++) {
+
+    		int y = data[i] & 0xFF;
+
+    		int x = (aInv * (y - b + 256)) % 256;
+
+    		result[i] = (byte) x;
+    	}
+
+    	return result;
     }
 }

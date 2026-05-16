@@ -1,7 +1,6 @@
 package Backend;
 
 import java.security.Security;
-import java.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -32,7 +31,7 @@ public class TwofishCipher extends AbsCipher {
     @Override
     public void loadKey(String keyStr) throws Exception {
 
-        byte[] keyBytes = keyStr.getBytes();
+        byte[] keyBytes = keyStr.getBytes("UTF-8");
 
         byte[] data = new byte[16];
 
@@ -54,26 +53,46 @@ public class TwofishCipher extends AbsCipher {
     @Override
     public byte[] encrypt(String text) throws Exception {
 
-        Cipher cipher = Cipher.getInstance("Twofish", "BC");
+        Cipher cipher =
+                Cipher.getInstance("Twofish/ECB/PKCS5Padding", "BC");
 
         cipher.init(Cipher.ENCRYPT_MODE, key);
 
-        byte[] result = cipher.doFinal(text.getBytes());
-
-        return Base64.getEncoder().encode(result);
+        return cipher.doFinal(text.getBytes("UTF-8"));
     }
 
     @Override
     public String decrypt(byte[] cipherText) throws Exception {
 
-        Cipher cipher = Cipher.getInstance("Twofish", "BC");
+        Cipher cipher =
+                Cipher.getInstance("Twofish/ECB/PKCS5Padding", "BC");
 
         cipher.init(Cipher.DECRYPT_MODE, key);
 
-        byte[] decode = Base64.getDecoder().decode(cipherText);
+        byte[] result = cipher.doFinal(cipherText);
 
-        byte[] result = cipher.doFinal(decode);
+        return new String(result, "UTF-8");
+    }
 
-        return new String(result);
+    @Override
+    public byte[] encrypt(byte[] data) throws Exception {
+
+        Cipher cipher =
+                Cipher.getInstance("Twofish/ECB/PKCS5Padding", "BC");
+
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+
+        return cipher.doFinal(data);
+    }
+
+    @Override
+    public byte[] decryptByte(byte[] data) throws Exception {
+
+        Cipher cipher =
+                Cipher.getInstance("Twofish/ECB/PKCS5Padding", "BC");
+
+        cipher.init(Cipher.DECRYPT_MODE, key);
+
+        return cipher.doFinal(data);
     }
 }

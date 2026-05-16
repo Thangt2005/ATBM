@@ -1,7 +1,5 @@
 package Backend;
 
-import java.util.Base64;
-
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -22,7 +20,7 @@ public class RC4Cipher extends AbsCipher {
     @Override
     public void loadKey(String keyStr) throws Exception {
 
-        byte[] keyBytes = keyStr.getBytes();
+        byte[] keyBytes = keyStr.getBytes("UTF-8");
 
         key = new SecretKeySpec(keyBytes, "RC4");
     }
@@ -34,9 +32,7 @@ public class RC4Cipher extends AbsCipher {
 
         cipher.init(Cipher.ENCRYPT_MODE, key);
 
-        byte[] result = cipher.doFinal(text.getBytes());
-
-        return Base64.getEncoder().encode(result);
+        return cipher.doFinal(text.getBytes("UTF-8"));
     }
 
     @Override
@@ -46,10 +42,28 @@ public class RC4Cipher extends AbsCipher {
 
         cipher.init(Cipher.DECRYPT_MODE, key);
 
-        byte[] decode = Base64.getDecoder().decode(cipherText);
+        byte[] result = cipher.doFinal(cipherText);
 
-        byte[] result = cipher.doFinal(decode);
+        return new String(result, "UTF-8");
+    }
 
-        return new String(result);
+    @Override
+    public byte[] encrypt(byte[] data) throws Exception {
+
+        Cipher cipher = Cipher.getInstance("RC4");
+
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+
+        return cipher.doFinal(data);
+    }
+
+    @Override
+    public byte[] decryptByte(byte[] data) throws Exception {
+
+        Cipher cipher = Cipher.getInstance("RC4");
+
+        cipher.init(Cipher.DECRYPT_MODE, key);
+
+        return cipher.doFinal(data);
     }
 }
