@@ -46,12 +46,12 @@ public class AffineCipher extends AbsCipher {
         int keyA = Integer.parseInt(arr[0].trim());
         int keyB = Integer.parseInt(arr[1].trim());
 
-        if (keyA % 2 == 0) {
+        if (gcd(keyA, 26) != 1) {
             throw new Exception("a phải là số lẻ");
         }
 
-        a = keyA % 256;
-        b = keyB % 256;
+        a = keyA % 26;
+        b = keyB % 26;
 
         // tránh số âm
         if (a < 0) {
@@ -63,28 +63,45 @@ public class AffineCipher extends AbsCipher {
         }
     }
 
-    @Override
+    private int gcd(int a, int b) {
+
+        if (b == 0) {
+            return Math.abs(a);
+        }
+
+        return gcd(b, a % b);
+    }
+	@Override
     public byte[] encrypt(String text) throws Exception {
 
         if (text == null) {
             return null;
         }
 
-        byte[] data = text.getBytes();
+        text = text.toUpperCase();
 
-        byte[] output = new byte[data.length];
+        String result = "";
 
-        for (int i = 0; i < data.length; i++) {
+        for (int i = 0; i < text.length(); i++) {
 
-            // ép byte về khoảng 0-255
-            int x = data[i] & 0xFF;
+            char c = text.charAt(i);
 
-            int y = (a * x + b) % 256;
+            // chỉ mã hóa chữ cái
+            if (c >= 'A' && c <= 'Z') {
 
-            output[i] = (byte) y;
+                int x = c - 'A';
+
+                int y = (a * x + b) % 26;
+
+                result += (char) (y + 'A');
+
+            } else {
+
+                result += c;
+            }
         }
 
-        return output;
+        return result.getBytes();
     }
 
     // tìm nghịch đảo modulo
@@ -92,7 +109,7 @@ public class AffineCipher extends AbsCipher {
 
         for (int i = 1; i < 256; i++) {
 
-            if ((a * i) % 256 == 1) {
+            if ((a * i) % 26 == 1) {
                 return i;
             }
         }
@@ -107,21 +124,32 @@ public class AffineCipher extends AbsCipher {
             return null;
         }
 
+        String text = new String(cipherText);
+
+        text = text.toUpperCase();
+
         int aInv = modInverse(a);
 
-        byte[] output = new byte[cipherText.length];
+        String result = "";
 
-        for (int i = 0; i < cipherText.length; i++) {
+        for (int i = 0; i < text.length(); i++) {
 
-            int y = cipherText[i] & 0xFF;
+            char c = text.charAt(i);
 
-            int x = aInv * (y - b);
+            if (c >= 'A' && c <= 'Z') {
 
-            x = (x + 256) % 256;
+                int y = c - 'A';
 
-            output[i] = (byte) x;
+                int x = (aInv * (y - b + 26)) % 26;
+
+                result += (char) (x + 'A');
+
+            } else {
+
+                result += c;
+            }
         }
 
-        return new String(output);
+        return result;
     }
 }

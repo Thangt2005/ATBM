@@ -23,7 +23,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 public class CipherApp {
-	JFrame jframe = new JFrame("Zip and Unzip");
+	JFrame jframe = new JFrame("Cipher App ATBM");
 	AbsCipher ab = new ShiftCipher();
 	RSA rsa = new RSA();
 	boolean rsaReady = false;
@@ -43,9 +43,9 @@ public class CipherApp {
 	JPanel Config = new JPanel((new BorderLayout()));
 	JPanel buttons = new JPanel((new GridLayout(2, 2, 5, 5)));
 	String[] traditional = { "Dịch chuyển", "Thay thế", "Hill", "Hoán vị", "Affine", "Vigenere" };
-	String[] symmetric = { "AES", "DES" };
+	String[] symmetric = {"AES","DES","Blowfish","RC4","Twofish"};
 	String[] asymmetric = { "RSA" };
-	String hashing[] = { "MD5" };
+	String hashing[] = { "MD5", "MD2", "SHA-1", "SHA-256", "SHA-512", "CRC-32" };
 
 	public CipherApp() {
 		txtKey.setText("3");
@@ -69,12 +69,11 @@ public class CipherApp {
 		cbMode.addItem("ECB");
 		cbMode.addItem("CBC");
 
-		
 		// Padding
 		JComboBox<String> cbPadding = new JComboBox<>();
 		cbPadding.addItem("PKCS5Padding");
 		cbPadding.addItem("NoPadding");
-		
+
 		pnlOptions.add(new JLabel("Type:"));
 		pnlOptions.add(cbType);
 
@@ -158,7 +157,6 @@ public class CipherApp {
 		cbType.setSelectedIndex(0);
 		cbType.getActionListeners()[0].actionPerformed(null);
 
-		// vùng chính ở giữa
 		// input(trái-trên)
 		JPanel p1 = new JPanel(new BorderLayout());
 		p1.setBorder(BorderFactory.createTitledBorder("Input(plainText/cipherText"));
@@ -177,143 +175,175 @@ public class CipherApp {
 		JButton btnDecrypt = new JButton("Decrypt");
 
 		btnEncrypt.addActionListener(e -> {
+
 			String algo = (String) cbAlgorithm.getSelectedItem();
+
 			String input = jtextInput.getText();
 
-			if (algo.equals("MD5")) {
-				try {
-					MD5 md5 = new MD5();
-					File file = new File(input.trim());
+			// Hash
+			if (algo.equals("MD5")
+					|| algo.equals("MD2")
+					|| algo.equals("SHA-1")
+					|| algo.equals("SHA-256")
+					|| algo.equals("SHA-512")
+					|| algo.equals("CRC-32")) {
 
-					// input là file hash file ngược lại hash chuỗi
-					if (file.exists() && file.isFile()) {
-						jtextOutput.setText(md5.hash(input.trim()));
-					} else {
-						jtextOutput.setText(md5.checkSum(input));
-					}
-				} catch (Exception ex) {
-					jtextOutput.setText("Lỗi xử lý Hash: " + ex.getMessage());
-				}
+				jtextOutput.setText(HashManager.hash(algo, input));
+
 				return;
 			}
 
+			// Kiểm tra save key
 			if (!keySave) {
+
 				jtextOutput.setText("Vui lòng Save Key trước khi Encrypt!");
+
 				return;
 			}
 
 			String result = "";
+
 			try {
-				if (algo.equals("Dịch chuyển")) {
-					ab = new ShiftCipher();
-				} else if (algo.equals("Hill")) {
-					String keyText = txtKey.getText().trim();
-					String[] parts = keyText.split(" ");
-					if (parts.length != 4) {
-						jtextOutput.setText("Key Hill phải gồm 4 số! Ví dụ: 3 3 2 5");
-						return;
-					}
-					int a = Integer.parseInt(parts[0]);
-					int b = Integer.parseInt(parts[1]);
-					int c = Integer.parseInt(parts[2]);
-					int d = Integer.parseInt(parts[3]);
-					int det = (((a * d - b * c) % 26) + 26) % 26;
-					if (gcd(det, 26) != 1) {
-						jtextOutput.setText("Key Hill không hợp lệ (không có nghịch đảo)!");
-						return;
-					}
-					ab = new HillCipher();
-				} else if (algo.equals("Hoán vị")) {
 
-					ab = new PermutationCipher();
+				// RSA
+				if (algo.equals("RSA")) {
 
-					if (txtKey.getText().trim().isEmpty()) {
-						jtextOutput.setText("Vui lòng nhập key hoán vị!");
-						return;
-					}
-
-				} else if (algo.equals("AES")) {
-
-					ab = new AESCipher();
-
-				} else if (algo.equals("DES")) {
-
-					ab = new DESCipher();
-
-				} else if (algo.equals("RSA")) {
 					if (!rsaReady) {
+
 						rsa.genKey();
+
 						rsaReady = true;
 					}
-					jtextOutput.setText(rsa.encryptBase64(input));
-					return;
-				} else if (algo.equals("Vigenere")) {
-					ab = new VigenereCipher();
-				} else if (algo.equals("Affine")) {
-					ab = new AffineCipher();
-				} else {
-					jtextOutput.setText("Chưa hỗ trợ thuật toán này!");
+
+					result = rsa.encryptBase64(input);
+
+					jtextOutput.setText(result);
+
 					return;
 				}
 
-				// Encrypt cho các thuật toán kế thừa AbsCipher
+				// Lấy cipher
+				ab = CipherFactory.getCipher(algo);
+
+				if (ab == null) {
+
+					jtextOutput.setText("Chưa hỗ trợ thuật toán này!");
+
+					return;
+				}
+
+				// Kiểm tra Hill Key
+				if (algo.equals("Hill")) {
+
+					String keyText = txtKey.getText().trim();
+
+					String[] parts = keyText.split(" ");
+
+					if (parts.length != 4) {
+
+						jtextOutput.setText("Key Hill phải gồm 4 số!");
+
+						return;
+					}
+
+					int a = Integer.parseInt(parts[0]);
+
+					int b = Integer.parseInt(parts[1]);
+
+					int c = Integer.parseInt(parts[2]);
+
+					int d = Integer.parseInt(parts[3]);
+
+					int det = (((a * d - b * c) % 26) + 26) % 26;
+
+					if (gcd(det, 26) != 1) {
+
+						jtextOutput.setText("Key Hill không hợp lệ!");
+
+						return;
+					}
+				}
+
+				// Kiểm tra Hoán vị
+				if (algo.equals("Hoán vị")) {
+
+					if (txtKey.getText().trim().isEmpty()) {
+
+						jtextOutput.setText("Vui lòng nhập key hoán vị!");
+
+						return;
+					}
+				}
+
+				// Load key
 				ab.loadKey(txtKey.getText().trim());
+
+				// Encrypt
 				result = new String(ab.encrypt(input));
 
 			} catch (Exception ex) {
+
 				ex.printStackTrace();
+
 				result = "Lỗi Encrypt!";
 			}
 
 			jtextOutput.setText(result);
+
 		});
 		btnDecrypt.addActionListener(e -> {
+
+			// Kiểm tra save key
 			if (!keySave) {
+
 				jtextOutput.setText("Vui lòng Save Key trước khi Decrypt!");
+
 				return;
 			}
 
-			// Lấy input từ ô văn bản (Thường là giải mã cái mình vừa dán vào)
 			String input = jtextInput.getText();
+
 			String algo = (String) cbAlgorithm.getSelectedItem();
+
 			String result = "";
 
 			try {
-				// --- 1. Khởi tạo đối tượng thuật toán tương ứng ---
-				if (algo.equals("Dịch chuyển")) {
-					ab = new ShiftCipher();
-				} else if (algo.equals("Hill")) {
-					ab = new HillCipher();
-				} else if (algo.equals("Hoán vị")) {
-					ab = new PermutationCipher();
-				} else if (algo.equals("AES")) {
-					ab = new AESCipher();
-				} else if (algo.equals("DES")) {
-					ab = new DESCipher();
 
-				} else if (algo.equals("RSA")) {
+				// RSA
+				if (algo.equals("RSA")) {
+
 					result = rsa.decrypt(input);
+
 					jtextOutput.setText(result);
-					return; // RSA return luôn
-				} else if (algo.equals("Vigenere")) {
-					ab = new VigenereCipher();
-				} else if (algo.equals("Affine")) {
-					ab = new AffineCipher();
-				} else {
-					jtextOutput.setText("Chưa hỗ trợ thuật toán này!");
+
 					return;
 				}
 
-				// --- 2. Nạp Key và thực hiện Decrypt ---
+				// Lấy cipher
+				ab = CipherFactory.getCipher(algo);
+
+				if (ab == null) {
+
+					jtextOutput.setText("Chưa hỗ trợ thuật toán này!");
+
+					return;
+				}
+
+				// Load key
 				ab.loadKey(txtKey.getText().trim());
+
+				// Decrypt
 				result = ab.decrypt(input.getBytes());
 
 			} catch (Exception ex) {
+
 				ex.printStackTrace();
+
 				result = "Lỗi Decrypt!";
 			}
 
 			jtextOutput.setText(result);
+
 		});
 		buttons.add(btnEncrypt);
 		buttons.add(btnDecrypt);
@@ -322,68 +352,71 @@ public class CipherApp {
 		Config.setBorder(BorderFactory.createTitledBorder("Configurations"));
 		Config.setLayout(new GridLayout(4, 1, 5, 5));
 
-		txtKey.setBorder(BorderFactory.createTitledBorder("Key (Manual Input)"));
+		txtKey.setBorder(BorderFactory.createTitledBorder("Key (Có thể tự nhập tay)"));
 
 		// Nút tạo khóa ngẫu nhiên
 		JButton btnCreateKey = new JButton("Create Key");
 
 		btnCreateKey.addActionListener((ActionEvent event) -> {
 
-			String algo = (String) cbAlgorithm.getSelectedItem();
-			Random random = new Random();
+		    String algo = (String) cbAlgorithm.getSelectedItem();
+		    Random random = new Random();
 
-			if (algo.equals("Hill")) {
-				// Tạo một key Hill mẫu dễ tính toán
-				txtKey.setText("3 3 2 5");
-			} else if (algo.equals("Hoán vị")) {
-				// Tạo key hoán vị mẫu cho sinh viên
-				txtKey.setText("312");
-			} else if (algo.equals("RSA")) {
-				txtKey.setText("RSA tự tạo khóa khi Encrypt");
-			} else if (algo.equals("Affine")) {
+		    if (algo.equals("Hill")) {
+		        // Tạo một key Hill mẫu
+		        txtKey.setText("3 3 2 5");
+		    } 
+		    else if (algo.equals("Thay thế")) {
+		        try {
+		            SubCipher sub = new SubCipher();
+		            javax.crypto.SecretKey generatedKey = sub.genKey();
+		            
+		            //lấy chuỗi 26 kí tự đã đảo vị trí gán lên
+		            txtKey.setText(new String(generatedKey.getEncoded()));
+		        } catch (Exception ex) {
+		            jtextOutput.setText("Lỗi sinh khóa Thay thế: " + ex.getMessage());
+		        }
+		    } 
+		    else if (algo.equals("Hoán vị")) {
+		        // Tạo key hoán vị mẫu cho sinh viên
+		        txtKey.setText("312");
+		    } 
+		    else if (algo.equals("RSA")) {
+		        txtKey.setText("RSA tự tạo khóa khi Encrypt");
+		    } 
+		    else if (algo.equals("Affine")) {
 
-				int a;
+		        int a;
+		        do {
+		            a = random.nextInt(255);
+		        } while (a % 2 == 0);
 
-				do {
-					a = random.nextInt(255);
-				} while (a % 2 == 0);
+		        int b = random.nextInt(255);
+		        txtKey.setText(a + "," + b);
+		    } 
+		    else if (algo.equals("Vigenere")) {
 
-				int b = random.nextInt(255);
+		        String s = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		        String key = "";
+		        for (int i = 0; i < 5; i++) {
+		            int index = random.nextInt(s.length());
+		            key += s.charAt(index);
+		        }
+		        txtKey.setText(key);
+		    } 
+		    else if (algo.equals("AES")|| algo.equals("DES")|| algo.equals("Blowfish")|| algo.equals("RC4")|| algo.equals("Twofish")) {
 
-				txtKey.setText(a + "," + b);
-			} else if (algo.equals("Vigenere")) {
+		        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		        String key = "";
+		        for (int i = 0; i < 16; i++) {
+		            int index = random.nextInt(chars.length());
+		            key += chars.charAt(index);
+		        }
+		        txtKey.setText(key);
+		    }
 
-				String s = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-				String key = "";
-
-				for (int i = 0; i < 5; i++) {
-
-					int index = random.nextInt(s.length());
-
-					key += s.charAt(index);
-				}
-
-				txtKey.setText(key);
-			} else if (algo.equals("AES") || algo.equals("DES")) {
-
-				String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-				String key = "";
-
-				for (int i = 0; i < 16; i++) {
-
-					int index = random.nextInt(chars.length());
-
-					key += chars.charAt(index);
-				}
-
-				txtKey.setText(key);
-			}
-
-			keySave = false; // Reset trạng thái để nhắc người dùng bấm Save Key mới
+		    keySave = false; // Reset 
 		});
-
 		// Nút ImportKey từ file
 		JButton btnImportKey = new JButton("Import Key");
 
@@ -422,14 +455,17 @@ public class CipherApp {
 			@Override
 			public void actionPerformed(java.awt.event.ActionEvent event) {
 
-				String keyText = txtKey.getText();
+				String keyText = txtKey.getText().trim() ;
 
 				// Kiểm tra key rỗng
 				if (keyText == null || keyText.trim().length() == 0) {
 					jtextOutput.setText("Chưa nhập key!");
 					return;
 				}
-
+				if (keyText.equals("Thay thế") && keyText.length() != 26) {
+		            jtextOutput.setText("Lỗi: Khóa của thuật toán Thay thế phải có độ dài đúng 26 ký tự!");
+		            return;
+		        }
 				// Đánh dấu đã lưu key
 				keySave = true;
 
